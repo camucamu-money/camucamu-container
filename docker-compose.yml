@@ -1,0 +1,87 @@
+version: "3.8"
+services:
+  api:
+    build:
+      context: ../camucamu-api/
+      dockerfile: dockerfile
+    ports:
+      - "5000:3002"
+      - "9229:9229"
+    env_file:
+      - ../camucamu-api/.env
+    volumes:
+      - ../camucamu-api/:/app
+      - volumeback:/app/node_modules
+    command: npm start
+    depends_on:
+      - mongosetup
+      - redis
+  app:
+    build:
+      context: ../camucamu-app/
+      dockerfile: dockerfile
+    volumes:
+      - '../camucamu-app/:/app'
+      - 'volumefront:/app/node_modules'
+    ports:
+      - 8080:8080
+    command: npm run serve
+    depends_on:
+      - api
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+  mongodb1:
+    image: mongo
+    restart: always
+    container_name: mongodb1
+    volumes:
+    - mongodata1:/data/db
+    ports:
+      - "27017:27017"
+    expose:
+    - "27017"
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "rsmongo", "--bind_ip_all"]
+  mongodb2:
+    image: mongo
+    restart: always
+    container_name: mongodb2
+    volumes:
+    - mongodata2:/data/db
+    expose:
+    - "27017"
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "rsmongo", "--bind_ip_all"] 
+  mongodb3:
+    image: mongo
+    restart: always
+    container_name: mongodb3
+    volumes:
+    - mongodata3:/data/db
+    expose:
+    - "27017"
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "rsmongo", "--bind_ip_all" ]
+  mongosetup:
+      image: "mongo-setup"
+      build: "./mongo-setup"
+      container_name: "mongosetup"
+      depends_on:
+          - mongodb1
+      volumes:
+          - mongostatus:/data/
+  redis:
+    image: "redis"
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    expose:
+      - 6379
+
+volumes:
+  mongodata1:
+  mongodata2:
+  mongodata3:
+  mongostatus:
+  volumefront:
+  volumeback:
+  # mongo-data:
