@@ -30,6 +30,19 @@ services:
       - api
     environment:
       - CHOKIDAR_USEPOLLING=true
+  www:
+    container_name: www
+    build:
+      context: ../camucamu-www/
+      dockerfile: dockerfile
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - NUXT_PORT=3000
+    command: 'npm run dev'
+    volumes:
+      - 'www:/www/node_modules'
   mongodb1:
     image: mongo
     restart: always
@@ -84,4 +97,5 @@ volumes:
   mongostatus:
   volumefront:
   volumeback:
+  www:
   # mongo-data:
